@@ -10,3 +10,4 @@ ok, boxes = bing.computeSaliency(img)
 print(ok, len(boxes))
 for b in boxes[:10]:
     print(b)
+
