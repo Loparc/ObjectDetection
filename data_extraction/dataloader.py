@@ -1,6 +1,6 @@
 from typing import Any
 
-from converter import read_content
+from data_extraction.converter import read_content
 DIR_TO_XML_FILE = "/dtu/datasets1/02516/potholes/annotations"
 from pathlib import Path
 from torch.utils.data import Dataset
