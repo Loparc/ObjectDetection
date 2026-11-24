@@ -97,7 +97,7 @@ def get_potholes_dataset(test_size=0.2):
     all_images = list()
     all_boxes_per_img = list()
     for i in range(TOTAL_IMAGES):
-        _, img_gtruth_boxes, img, boxes_per_img = read_content(0)
+        _, img_gtruth_boxes, img, boxes_per_img = read_content(i)
         all_gtruth_boxes.append(img_gtruth_boxes)
         all_images.append(img)
         all_boxes_per_img.append(boxes_per_img)
