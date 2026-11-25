@@ -1,7 +1,11 @@
 import torch.nn as nn
 import torch
+import torch.utils.model_zoo as model_zoo
 
-class RCNN(nn.Module):
+model_url = 'https://download.pytorch.org/models/vgg16-397923af.pth'
+
+
+class VGG16(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
@@ -55,3 +59,24 @@ class RCNN(nn.Module):
 
     def forward(self, x):
         return self.fully_connected(self.convolutional_layer(x))
+
+def vgg16(pretrained=False):
+    '''
+    MUST use this function to create the convolutional model
+    :param pretrained: if true returns a model pre-trained on ImageNet
+    '''
+
+    model = VGG16()
+    if pretrained:
+        pretrained_dict = model_zoo.load_url(model_url)
+        model_dict = model.state_dict()
+
+        # filter out unnecessary keys
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+        # overwrite entries in the existing state dict
+        model_dict.update(pretrained_dict)
+        # load the new state dict
+        model.load_state_dict(model_dict)
+
+    return model
+        
