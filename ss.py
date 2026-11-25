@@ -40,10 +40,10 @@ def saving_bounding_boxes(image, candidates):
     cv2.imwrite(out_path, cv2.cvtColor(image_with_bbs, cv2.COLOR_RGB2BGR))
 
     plt.figure(figsize=(10, 10))
-    plt.imshow(image_with_bbs)
+    #plt.imshow(image_with_bbs)
     plt.title(f"Selective Search: {len(candidates)} candidates")
     plt.axis('off')
-    plt.show()
+    #plt.show()
 
 """ Works better like this, if the BIGGER size of an image remains as the target one """
 def resize_image(image, target=TARGET):
@@ -272,7 +272,7 @@ def extract_candidates(image, color_spaces=("hsv", "lab"), starting_regions=(50,
                     """   
                     if area < min_frac * img_area: continue
                     boxes.add((x, y, w, h))
-    return dedupe(sorted(boxes, key=lambda b: -b[2] * b[3]))
+    return boxes
 
 
 """
@@ -289,8 +289,99 @@ image_orig = read(os.path.join(script_dir, "potholes0.png"), 1)
 
 image, f = resize_image(image_orig)
 segments_fz = felzenszwalb(image, scale=100, sigma=0.8, min_size=20)
-visualization(image, segments_fz)
+#visualization(image, segments_fz)
 
 candidates = extract_candidates(image)
 print(f"{len(candidates)} possible BBoxs")
 saving_bounding_boxes(image, candidates)
+
+""" TRANSLATE COORDS TO OG SIZE, AND GET RECALL OF FUNC """
+#print(candidates)
+Candidates_New = [[round(x / f), round(y / f), round((x + w) / f), round((y + h) / f)]
+                   for x, y, w, h in candidates]
+
+def get_box_area(box):
+    return (box[2] - box[0]) * (box[3] - box[1])
+def get_vectorized_IOU(ground_truth, proposals):
+    '''
+    get_vectorized_IOU provides a matrix of IOUs between N ground truth boxes and M proposal boxes
+
+    :param ground_truth: a list of ground truth boxes (list of [xmin, ymin, xmax, ymax] for every box)
+    :param proposals: a list of proposal boxes (list of [xmin, ymin, xmax, ymax] for every box)
+    :return iou_matrix: a 2 dimensional array of iou values, for every ground truth box n and every proposal box m, the iou between the two boxes is iou_matrix[n, m]
+    '''
+    N = len(ground_truth)
+    M = len(proposals)
+
+    iou_matrix = np.zeros((N, M))
+    for i in range(N):
+        for j in range(M):
+            truth_box = ground_truth[i]
+            proposal = proposals[j]
+            intersection = [0, 0, 0, 0]
+            intersection[0] = max(truth_box[0], proposal[0])
+            intersection[1] = max(truth_box[1], proposal[1])
+            intersection[2] = min(truth_box[2], proposal[2])
+            intersection[3] = min(truth_box[3], proposal[3])
+
+            # checking for no overlap
+            if intersection[2] <= intersection[0] or intersection[3] <= intersection[1]:
+                intersection_area = 0
+            else:
+                intersection_area = get_box_area(intersection)
+
+            truth_box_area = get_box_area(truth_box)
+            proposal_area = get_box_area(proposal)
+
+            union_area = truth_box_area + proposal_area - intersection_area
+            if union_area <= 0:
+                print(f"ERROR: union area zero for ground truth for {i}")
+                continue
+            intersection_over_union = intersection_area / union_area
+            
+
+            iou_matrix[i, j] = intersection_over_union
+    return iou_matrix
+
+def get_single_image_recall(ground_truths, proposals, iou_threshold):
+    total_ground_truth_boxes = len(ground_truths)
+    iou_matrix = get_vectorized_IOU(ground_truths, proposals)
+    best_proposal_ious = np.max(iou_matrix, axis=1)
+    recalled_objects = best_proposal_ious[np.where(best_proposal_ious[:] > iou_threshold)]
+    return best_proposal_ious, total_ground_truth_boxes, len(recalled_objects)
+
+import xml.etree.ElementTree as ET
+def read_content(xml_file: str):
+
+  tree = ET.parse(xml_file)
+  root = tree.getroot()
+
+  list_with_all_boxes = []
+
+  filename = root.find('filename').text
+  #Create the bounding boxes
+  for boxes in root.iter('object'):
+
+
+      ymin, xmin, ymax, xmax = None, None, None, None
+
+      ymin = int(boxes.find("bndbox/ymin").text)
+      xmin = int(boxes.find("bndbox/xmin").text)
+      ymax = int(boxes.find("bndbox/ymax").text)
+      xmax = int(boxes.find("bndbox/xmax").text)
+
+      list_with_single_boxes = [xmin, ymin, xmax, ymax]
+      list_with_all_boxes.append(list_with_single_boxes)
+
+  return filename, list_with_all_boxes
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+name, boxesGT = read_content(os.path.join(script_dir,"potholes0.xml"))
+
+print(get_single_image_recall(boxesGT,Candidates_New,0.5))
+"""
+TO DO:
+Calcualte recall with every box
+Play with a number of selected random boxes from candidates to see how the recall varies, and how many boxes are "good enough"
+"""
+
