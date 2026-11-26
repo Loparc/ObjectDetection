@@ -12,7 +12,6 @@ def read_content(xml_file: str):
   #Create the bounding boxes
   for boxes in root.iter('object'):
 
-
       ymin, xmin, ymax, xmax = None, None, None, None
 
       ymin = int(boxes.find("bndbox/ymin").text)

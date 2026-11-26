@@ -1,0 +1,39 @@
+Passo 0: Preparação
+Separar o treino em treino e validação, por imagem, e usar sempre esta mesma divisão.
+Contar a proporção pothole/background e guardar o número para o relatório.
+Definir as métricas: accuracy, precision, recall, F1 da classe pothole e matriz de confusão.
+Passo 1: Baseline desbalanceada
+
+Rede pré-treinada, dados tal como estão, sem tratamento do desbalanceamento.
+Esperado: accuracy alta e recall de pothole muito baixo.
+Conclusão: a accuracy engana e é preciso tratar o desbalanceamento.
+Passo 2: Tratar o desbalanceamento
+Testar pesos na loss e batches balanceados.
+Opcional: variar a proporção de positivos por batch (10%, 25%, 50%).
+Fazer uma tabela comparativa e escolher o melhor método.
+Passo 3: Pré-treinada vs. do zero
+Com o melhor método do passo 2, comparar os pesos ImageNet com pesos aleatórios.
+Fazer um gráfico com as curvas de loss e F1 de validação.
+Passo 4: Fine-tuning parcial vs. total
+Só a última camada contra a rede toda.
+Passo 5: Data augmentation
+Sem e com flips, brilho, contraste e crops.
+Ver se diminui a distância entre treino e validação.
+Passo 6: Limiares de IoU (se o JSON tiver os IoU)
+Comparar o limiar único de 0,5 com a regra ≥ 0,5 / < 0,3 que descarta os intermédios.
+Passo 7: Efeito de N
+Quando o teu colega escolher o N, voltar a treinar o melhor modelo com os top-N proposals.
+Passo 8: Análise qualitativa
+Mostrar exemplos de falsos positivos e falsos negativos e explicar o que falha.
+Ao longo de todos os passos
+Mudar uma coisa de cada vez.
+Validação sempre com a distribuição real, sem balancear.
+Escolher os modelos pelo F1 ou recall de pothole, não pela accuracy.
+
+Se o tempo for curto, a prioridade é 0 → 1 → 2 → 3 → 8. Isso já dá uma narrativa completa.
+
+
+conjunto  imagens  proposals  pothole   backgr.   % pos  neg:pos img s/ pos
+train         478    1177636    16999   1160637   1.44%      68:1          0
+val           120     293988     3967    290021   1.35%      73:1          0
+test           67     150146     2268    147878   1.51%      65:1          0

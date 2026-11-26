@@ -37,7 +37,7 @@ def get_vectorized_IOU(ground_truth, proposals):
             intersection[0] = max(truth_box[0], proposal[0])
             intersection[1] = max(truth_box[1], proposal[1])
             intersection[2] = min(truth_box[2], proposal[2])
-            intersection[3] = min(truth_box[3], truth_box[3])
+            intersection[3] = min(truth_box[3], proposal[3])
 
             # checking for no overlap
             if intersection[2] <= intersection[0] or intersection[3] <= intersection[1]:

@@ -22,7 +22,6 @@ class PotHoleDataLoader(Dataset):
         self.dataset = []
         self.transf = transformations
         for file_path, image_path in zip(annotations_dir.iterdir(),images_dir.iterdir()):
-            
             if file_path.is_file() and image_path.is_file():
                 content = file_path.read_text(encoding="utf-8", errors="replace")
                 
